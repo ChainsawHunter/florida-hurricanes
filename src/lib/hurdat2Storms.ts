@@ -7,6 +7,15 @@
  * match the first tokens of a track row).
  */
 
+import { Hurdat2TrackRow, parseHurdat2TrackLine } from "./hurdat2Track";
+
+export type FloridaHurricane = {
+  dateOfLandfall: Date;
+  latitude: number;
+  longitude: number;
+  maximumSustainedWindKt: number;
+};
+
 /** Two-letter basin + six digits, e.g. AL011851 */
 const STORM_HEADER_FIRST_FIELD = /^[A-Z]{2}\d{6}$/i;
 
@@ -18,8 +27,42 @@ export function isHurdat2StormHeaderLine(line: string): boolean {
   return STORM_HEADER_FIRST_FIELD.test(firstField);
 }
 
-/** The three logical fields on a storm header line: id, name, number of track rows. */
-export function parseHurdat2StormHeaderLine(line: string): { id: string; name: string; entryCount: number } | null {
+export type Hurdat2StormIdParts = {
+  /** Two-letter basin code, e.g. Atlantic `AL`. */
+  basin: string;
+  /** Cyclone number within the season (leading zero kept), e.g. `"01"`. */
+  cycloneNumber: string;
+  /** Four-digit season year, e.g. 1851. */
+  year: number;
+};
+
+/**
+ * Parses a HURDAT2 storm id: two letters + two digits (cyclone #) + four digits (year),
+ * e.g. `AL011851` → basin `AL`, cyclone number `01`, year `1851`.
+ */
+export function parseHurdat2StormId(id: string): Hurdat2StormIdParts | null {
+  const trimmed = id.trim();
+  const m = trimmed.match(/^([A-Za-z]{2})(\d{2})(\d{4})$/);
+  if (!m) return null;
+  const year = Number(m[3]);
+  if (!Number.isFinite(year)) return null;
+  return {
+    basin: m[1].toUpperCase(),
+    cycloneNumber: m[2],
+    year,
+  };
+}
+
+export type Hurdat2StormHeaderParsed = {
+  id: string;
+  name: string;
+  entryCount: number;
+  /** Present when `id` matches `LLNNYYYY`; otherwise `null`. */
+  idParts: Hurdat2StormIdParts | null;
+};
+
+/** The storm header line: id, name, number of track rows, plus parsed id components when possible. */
+export function parseHurdat2StormHeaderLine(line: string): Hurdat2StormHeaderParsed | null {
   if (!isHurdat2StormHeaderLine(line)) return null;
   const parts = line
     .split(",")
@@ -28,16 +71,22 @@ export function parseHurdat2StormHeaderLine(line: string): { id: string; name: s
   if (parts.length < 3) return null;
   const entryCount = Number(parts[2]);
   if (!Number.isFinite(entryCount)) return null;
-  return { id: parts[0], name: parts[1], entryCount };
+  const id = parts[0];
+  return {
+    id,
+    name: parts[1],
+    entryCount,
+    idParts: parseHurdat2StormId(id),
+  };
 }
 
-export type Hurdat2StormCsvChunk = {
+export type Hurdat2StormChunk = {
   /** Raw storm metadata line (id, name, entry count). */
   headerLine: string;
   /** Newline-separated best-track rows for this storm (comma-separated fields per line). */
-  trackCsv: string;
+  trackData: string;
   /** Parsed header fields when the line matches `parseHurdat2StormHeaderLine`. */
-  headerParsed: { id: string; name: string; entryCount: number } | null;
+  headerParsed: Hurdat2StormHeaderParsed | null;
   /**
    * True when `headerParsed` is set and its `entryCount` does not match the number of track
    * lines collected before the next storm (or EOF). We still collect all lines until the next
@@ -47,16 +96,16 @@ export type Hurdat2StormCsvChunk = {
 };
 
 /**
- * Splits full HURDAT2 file text into per-storm chunks. Each `trackCsv` joins that storm’s
+ * Splits full HURDAT2 file text into per-storm chunks. Each `trackData` joins that storm’s
  * best-track lines (no storm metadata line included).
  *
  * Declared `entryCount` on each header is compared to the number of track rows actually
  * collected; see `entryCountMismatch` on each chunk. Delimiters are still storm headers so
  * inconsistent counts never cause silent data loss.
  */
-export function groupHurdat2IntoStormCsvChunks(text: string): Hurdat2StormCsvChunk[] {
+export function groupHurdat2IntoStormChunks(text: string): Hurdat2StormChunk[] {
   const lines = text.split(/\r?\n/);
-  const stormChunks: Hurdat2StormCsvChunk[] = [];
+  const stormChunks: Hurdat2StormChunk[] = [];
   let headerLine: string | null = null;
   const stormLines: string[] = [];
 
@@ -66,7 +115,7 @@ export function groupHurdat2IntoStormCsvChunks(text: string): Hurdat2StormCsvChu
     const trackLineCount = stormLines.length;
     stormChunks.push({
       headerLine,
-      trackCsv: stormLines.join("\n"),
+      trackData: stormLines.join("\n"),
       headerParsed,
       entryCountMismatch: headerParsed !== null && headerParsed.entryCount !== trackLineCount,
     });
@@ -82,8 +131,70 @@ export function groupHurdat2IntoStormCsvChunks(text: string): Hurdat2StormCsvChu
     } else if (headerLine !== null) {
       stormLines.push(line.trimEnd());
     }
-  }
+  } 
   flush();
 
   return stormChunks;
+}
+
+export function processFloridaHurricanesFromHurdata2Data(text: string): FloridaHurricane[] {
+  const lines = text.split(/\r?\n/);
+  const floridaHurricanes: FloridaHurricane[] = [];
+  let currStormHeader: Hurdat2StormHeaderParsed | null = null;
+  let currFloridaHurricaneTrackLines: Hurdat2TrackRow[] = [];
+
+  // When we find a new storm header, we flush the current storm and start a new one.
+  const flush = () => {
+    if (currStormHeader === null) return;
+    if (currFloridaHurricaneTrackLines.length === 0) return;
+    const floridaHurricane = {
+      // JS Date month is 0-based; HURDAT2 month is 1-based.
+      dateOfLandfall: new Date(
+        currStormHeader.idParts?.year ?? 0,
+        currFloridaHurricaneTrackLines[0].month - 1,
+        currFloridaHurricaneTrackLines[0].day,
+        currFloridaHurricaneTrackLines[0].hourUtc,
+        currFloridaHurricaneTrackLines[0].minuteUtc,
+      ),
+      latitude: currFloridaHurricaneTrackLines[0].latitudeDegrees,
+      longitude: toSignedLongitude(currFloridaHurricaneTrackLines[0].longitudeDegrees, currFloridaHurricaneTrackLines[0].longitudeHemisphere),
+      maximumSustainedWindKt: currFloridaHurricaneTrackLines[0].maximumSustainedWindKt ?? 0,
+    };
+    floridaHurricanes.push(floridaHurricane);
+    currStormHeader = null;
+    currFloridaHurricaneTrackLines = [];
+  }
+
+  for (const line of lines) {
+    if (isHurdat2StormHeaderLine(line)) {
+      flush();
+      const headerParsed = parseHurdat2StormHeaderLine(line);
+      if (headerParsed !== null && headerParsed.idParts !== null && headerParsed.idParts.basin === "AL") {
+        currStormHeader = headerParsed;
+      }
+    } else if (currStormHeader !== null) {
+      const trackRow = parseHurdat2TrackLine(line);
+      if (trackRow !== null && isFloridaHurricaneTrackRow(trackRow)) {
+        currFloridaHurricaneTrackLines.push(trackRow);
+      }
+    }
+  }
+
+  flush();
+  return floridaHurricanes;
+}
+
+function toSignedLongitude(degrees: number, hemisphere: "W" | "E"): number {
+  return hemisphere === "W" ? -Math.abs(degrees) : Math.abs(degrees);
+}
+
+function inFloridaBoundingBox(trackRow: Hurdat2TrackRow): boolean {
+  // Very simple bounds; refine later (polygon/coastline) when needed.
+  const lat = trackRow.latitudeDegrees * (trackRow.latitudeHemisphere === "S" ? -1 : 1);
+  const lon = toSignedLongitude(trackRow.longitudeDegrees, trackRow.longitudeHemisphere);
+  return lat >= 24 && lat <= 31.5 && lon >= -87.7 && lon <= -79.8;
+}
+
+function isFloridaHurricaneTrackRow(trackRow: Hurdat2TrackRow): boolean {
+  return trackRow.systemStatus === "HU" && inFloridaBoundingBox(trackRow);
 }

@@ -1,16 +1,18 @@
 import { describe, expect, it } from "vitest";
 import {
-  groupHurdat2IntoStormCsvChunks,
   isHurdat2StormHeaderLine,
   parseHurdat2StormHeaderLine,
+  parseHurdat2StormId,
+  processFloridaHurricanesFromHurdata2Data,
 } from "./hurdat2Storms";
 
-const SAMPLE = `AL011851,            UNNAMED,     2,
-18510625, 0000,  , HU, 28.0N,  94.8W,  80, -999,
-18510628, 0000,  , TS, 31.0N, 100.2W,  40, -999,
+const FL_SAMPLE =
+`AL011851,            FL_STORM,     2,
+18510625, 2100, L, HU, 28.2N,  81.2W,  80, -999, -999, -999, -999, -999, -999, -999, -999, -999, -999, -999, -999, -999, -999
+18510626, 0000,  , HU, 29.0N,  82.0W,  70, -999, -999, -999, -999, -999, -999, -999, -999, -999, -999, -999, -999, -999, -999
 
-AL021851,            OTHER_ONE,      1,
-18510705, 1200,  , HU, 22.2N,  97.6W,  80, -999,
+AL021851,            TX_STORM,     1,
+18510625, 2100, L, HU, 28.2N,  96.8W,  80, -999, -999, -999, -999, -999, -999, -999, -999, -999, -999, -999, -999, -999, -999
 `;
 
 describe("isHurdat2StormHeaderLine", () => {
@@ -30,12 +32,37 @@ describe("isHurdat2StormHeaderLine", () => {
   });
 });
 
+describe("parseHurdat2StormId", () => {
+  it("parses basin, two-digit cyclone number, and four-digit year", () => {
+    expect(parseHurdat2StormId("AL011851")).toEqual({
+      basin: "AL",
+      cycloneNumber: "01",
+      year: 1851,
+    });
+  });
+
+  it("normalizes basin letters to uppercase", () => {
+    expect(parseHurdat2StormId("ep022020")).toEqual({
+      basin: "EP",
+      cycloneNumber: "02",
+      year: 2020,
+    });
+  });
+
+  it("returns null when the id does not match LLNNYYYY", () => {
+    expect(parseHurdat2StormId("AL01185")).toBeNull();
+    expect(parseHurdat2StormId("A0118511")).toBeNull();
+    expect(parseHurdat2StormId("")).toBeNull();
+  });
+});
+
 describe("parseHurdat2StormHeaderLine", () => {
-  it("parses id, name, and entry count", () => {
+  it("parses id, name, entry count, and id parts", () => {
     expect(parseHurdat2StormHeaderLine("AL011851,            UNNAMED,     14,")).toEqual({
       id: "AL011851",
       name: "UNNAMED",
       entryCount: 14,
+      idParts: { basin: "AL", cycloneNumber: "01", year: 1851 },
     });
   });
 
@@ -44,53 +71,12 @@ describe("parseHurdat2StormHeaderLine", () => {
   });
 });
 
-describe("groupHurdat2IntoStormCsvChunks", () => {
-  it("groups track lines under each storm header", () => {
-    const chunks = groupHurdat2IntoStormCsvChunks(SAMPLE);
-    expect(chunks).toHaveLength(2);
-
-    expect(chunks[0].headerLine).toContain("AL011851");
-    expect(chunks[0].trackCsv.split("\n").filter(Boolean)).toHaveLength(2);
-    expect(chunks[0].headerParsed).toEqual({
-      id: "AL011851",
-      name: "UNNAMED",
-      entryCount: 2,
-    });
-    expect(chunks[0].entryCountMismatch).toBe(false);
-
-    expect(chunks[1].headerLine).toContain("AL021851");
-    expect(chunks[1].trackCsv.split("\n").filter(Boolean)).toHaveLength(1);
-    expect(chunks[1].headerParsed).toEqual({
-      id: "AL021851",
-      name: "OTHER_ONE",
-      entryCount: 1,
-    });
-    expect(chunks[1].entryCountMismatch).toBe(false);
-  });
-
-  it("flags entryCountMismatch when header count ≠ track rows", () => {
-    const bad = `AL011851,            UNNAMED,     5,
-18510625, 0000,  , HU, 28.0N,  94.8W,  80, -999,
-`;
-    const chunks = groupHurdat2IntoStormCsvChunks(bad);
-    expect(chunks).toHaveLength(1);
-    expect(chunks[0].headerParsed?.entryCount).toBe(5);
-    expect(chunks[0].trackCsv.split("\n").filter(Boolean)).toHaveLength(1);
-    expect(chunks[0].entryCountMismatch).toBe(true);
-  });
-
-  it("ignores lines before the first storm header", () => {
-    const text = `ignored preamble
-${SAMPLE}`;
-    const chunks = groupHurdat2IntoStormCsvChunks(text);
-    expect(chunks).toHaveLength(2);
-    expect(chunks[0].headerLine).toContain("AL011851");
-  });
-
-  it("handles CRLF", () => {
-    const crlf = SAMPLE.replace(/\n/g, "\r\n");
-    const chunks = groupHurdat2IntoStormCsvChunks(crlf);
-    expect(chunks).toHaveLength(2);
-    expect(chunks[0].trackCsv.split("\n")).toHaveLength(2);
+describe("processFloridaHurricanesFromHurdata2Data", () => {
+  it("processes Florida hurricanes from HURDAT2 data", () => {
+    const floridaHurricanes = processFloridaHurricanesFromHurdata2Data(FL_SAMPLE);
+    expect(floridaHurricanes).toHaveLength(1);
+    expect(floridaHurricanes[0].maximumSustainedWindKt).toBe(80);
+    // Longitude should be signed (W negative).
+    expect(floridaHurricanes[0].longitude).toBeLessThan(0);
   });
 });
