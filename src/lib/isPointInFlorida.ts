@@ -11,8 +11,7 @@ import floridaGeoJson from "../data/florida.json";
  */
 export function isPointInFlorida(latitude: number, longitude: number): boolean {
   const data = floridaGeoJson as any;
-  const feature = data?.features?.[0];
-  const geometry = feature?.geometry;
+  const geometry = data?.geometry;
   if (!geometry) return false;
   return booleanPointInPolygon(point([longitude, latitude]), geometry);
 }
