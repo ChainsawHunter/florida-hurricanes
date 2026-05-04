@@ -149,6 +149,10 @@ export function processFloridaHurricanesFromHurdata2Data(text: string): FloridaH
   const flush = () => {
     if (currStormHeader === null) return;
     if (currFloridaHurricaneTrackLines.length === 0) return;
+    const maxWind = currFloridaHurricaneTrackLines.reduce((max, row) => {
+      const v = row.maximumSustainedWindKt ?? 0;
+      return v > max ? v : max;
+    }, 0);
     const floridaHurricane = {
       name: currStormHeader.name,
       // JS Date month is 0-based; HURDAT2 month is 1-based.
@@ -161,7 +165,7 @@ export function processFloridaHurricanesFromHurdata2Data(text: string): FloridaH
       ),
       latitude: toSignedLatitude(currFloridaHurricaneTrackLines[0].latitudeDegrees, currFloridaHurricaneTrackLines[0].latitudeHemisphere),
       longitude: toSignedLongitude(currFloridaHurricaneTrackLines[0].longitudeDegrees, currFloridaHurricaneTrackLines[0].longitudeHemisphere),
-      maximumSustainedWindKt: currFloridaHurricaneTrackLines[0].maximumSustainedWindKt ?? 0,
+      maximumSustainedWindKt: maxWind,
     };
     floridaHurricanes.push(floridaHurricane);
     currStormHeader = null;
