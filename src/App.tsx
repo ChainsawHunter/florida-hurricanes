@@ -59,18 +59,16 @@ export function App() {
           <table>
             <thead>
               <tr>
-                <th>Date of landfall</th>
-                <th>Latitude</th>
-                <th>Longitude</th>
-                <th>Max wind (kt)</th>
+                <th>Date of Lanfall</th>
+                <th>Hurricane Nme</th>
+                <th>Max Wind in Knots</th>
               </tr>
             </thead>
             <tbody>
               {hurricanes.map((h, i) => (
                 <tr key={i}>
                   <td>{h.dateOfLandfall.toISOString()}</td>
-                  <td>{h.latitude.toFixed(1)}</td>
-                  <td>{h.longitude.toFixed(1)}</td>
+                  <td>{h.name}</td>
                   <td>{h.maximumSustainedWindKt}</td>
                 </tr>
               ))}

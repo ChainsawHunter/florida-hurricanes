@@ -8,8 +8,10 @@
  */
 
 import { Hurdat2TrackRow, parseHurdat2TrackLine } from "./hurdat2Track";
+import { isPointInFlorida } from "./isPointInFlorida";
 
 export type FloridaHurricane = {
+  name: string;
   dateOfLandfall: Date;
   latitude: number;
   longitude: number;
@@ -148,6 +150,7 @@ export function processFloridaHurricanesFromHurdata2Data(text: string): FloridaH
     if (currStormHeader === null) return;
     if (currFloridaHurricaneTrackLines.length === 0) return;
     const floridaHurricane = {
+      name: currStormHeader.name,
       // JS Date month is 0-based; HURDAT2 month is 1-based.
       dateOfLandfall: new Date(
         currStormHeader.idParts?.year ?? 0,
@@ -156,7 +159,7 @@ export function processFloridaHurricanesFromHurdata2Data(text: string): FloridaH
         currFloridaHurricaneTrackLines[0].hourUtc,
         currFloridaHurricaneTrackLines[0].minuteUtc,
       ),
-      latitude: currFloridaHurricaneTrackLines[0].latitudeDegrees,
+      latitude: toSignedLatitude(currFloridaHurricaneTrackLines[0].latitudeDegrees, currFloridaHurricaneTrackLines[0].latitudeHemisphere),
       longitude: toSignedLongitude(currFloridaHurricaneTrackLines[0].longitudeDegrees, currFloridaHurricaneTrackLines[0].longitudeHemisphere),
       maximumSustainedWindKt: currFloridaHurricaneTrackLines[0].maximumSustainedWindKt ?? 0,
     };
@@ -184,6 +187,10 @@ export function processFloridaHurricanesFromHurdata2Data(text: string): FloridaH
   return floridaHurricanes;
 }
 
+function toSignedLatitude(degrees: number, hemisphere: "N" | "S"): number {
+  return hemisphere === "S" ? -Math.abs(degrees) : Math.abs(degrees);
+}
+
 function toSignedLongitude(degrees: number, hemisphere: "W" | "E"): number {
   return hemisphere === "W" ? -Math.abs(degrees) : Math.abs(degrees);
 }
@@ -192,7 +199,7 @@ function inFloridaBoundingBox(trackRow: Hurdat2TrackRow): boolean {
   // Very simple bounds; refine later (polygon/coastline) when needed.
   const lat = trackRow.latitudeDegrees * (trackRow.latitudeHemisphere === "S" ? -1 : 1);
   const lon = toSignedLongitude(trackRow.longitudeDegrees, trackRow.longitudeHemisphere);
-  return lat >= 24 && lat <= 31.5 && lon >= -87.7 && lon <= -79.8;
+  return isPointInFlorida(lat, lon);
 }
 
 function isFloridaHurricaneTrackRow(trackRow: Hurdat2TrackRow): boolean {
