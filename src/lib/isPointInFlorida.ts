@@ -1,9 +1,9 @@
 import booleanPointInPolygon from "@turf/boolean-point-in-polygon";
 import { point } from "@turf/helpers";
-import type { Feature, GeoJsonProperties, Polygon } from "geojson";
+import type { Feature, GeoJsonProperties, Polygon, MultiPolygon } from "geojson";
 import floridaGeoJson from "../data/florida.json";
 
-type PolygonFeature = Feature<Polygon, GeoJsonProperties>;
+type PolygonFeature = Feature<Polygon | MultiPolygon, GeoJsonProperties>;
 
 /**
  * Returns true when the (lat, lon) point lies inside the Florida polygon.
