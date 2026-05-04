@@ -139,7 +139,7 @@ export function groupHurdat2IntoStormChunks(text: string): Hurdat2StormChunk[] {
   return stormChunks;
 }
 
-export function processFloridaHurricanesFromHurdata2Data(text: string): FloridaHurricane[] {
+export function processFloridaHurricanesFromHurdat2Data(text: string): FloridaHurricane[] {
   const storms = groupHurdat2IntoStormChunks(text);
 
   return storms.flatMap((storm): FloridaHurricane[] => {
