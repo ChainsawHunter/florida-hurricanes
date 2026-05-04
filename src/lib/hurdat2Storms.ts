@@ -93,7 +93,7 @@ export type Hurdat2StormChunk = {
  * Splits full HURDAT2 text into per-storm chunks (header line + following best-track rows).
  * Used internally by {@link processFloridaHurricanesFromHurdat2Data};
  */
-function splitHurdat2TextIntoStormChunks(text: string): Hurdat2StormChunk[] {
+function groupHurdat2IntoStormChunks(text: string): Hurdat2StormChunk[] {
   const lines = text.split(/\r?\n/);
   const stormChunks: Hurdat2StormChunk[] = [];
   let headerLine: string | null = null;
@@ -127,9 +127,8 @@ function splitHurdat2TextIntoStormChunks(text: string): Hurdat2StormChunk[] {
   return stormChunks;
 }
 
-/** Processes HURDAT2 data to extract Florida hurricanes. */
 export function processFloridaHurricanesFromHurdat2Data(text: string): FloridaHurricane[] {
-  const storms = splitHurdat2TextIntoStormChunks(text);
+  const storms = groupHurdat2IntoStormChunks(text);
 
   return storms.flatMap((storm): FloridaHurricane[] => {
     const header = storm.headerParsed;
