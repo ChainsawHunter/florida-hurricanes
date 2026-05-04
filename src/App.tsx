@@ -1,6 +1,6 @@
 import { useCallback, useState } from "react";
 import {
-  processFloridaHurricanesFromHurdata2Data,
+  processFloridaHurricanesFromHurdat2Data,
   type FloridaHurricane,
 } from "./lib/hurdat2Storms";
 import "./App.css";
@@ -19,7 +19,7 @@ export function App() {
     if (!file) return;
     try {
       const text = await file.text();
-      setHurricanes(processFloridaHurricanesFromHurdata2Data(text));
+      setHurricanes(processFloridaHurricanesFromHurdat2Data(text));
       setFileName(file.name);
     } catch (err) {
       setLoadError(err instanceof Error ? err.message : "Failed to read file");
