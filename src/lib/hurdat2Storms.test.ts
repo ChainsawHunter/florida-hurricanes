@@ -9,7 +9,7 @@ import {
 const FL_SAMPLE =
 `AL011851,            FL_STORM,     2,
 18510625, 2100, L, HU, 28.2N,  81.2W,  80, -999, -999, -999, -999, -999, -999, -999, -999, -999, -999, -999, -999, -999, -999
-18510626, 0000,  , HU, 29.0N,  82.0W,  70, -999, -999, -999, -999, -999, -999, -999, -999, -999, -999, -999, -999, -999, -999
+18510626, 0000, L, HU, 29.0N,  82.0W,  90, -999, -999, -999, -999, -999, -999, -999, -999, -999, -999, -999, -999, -999, -999
 
 AL021851,            TX_STORM,     1,
 18510625, 2100, L, HU, 28.2N,  96.8W,  80, -999, -999, -999, -999, -999, -999, -999, -999, -999, -999, -999, -999, -999, -999
@@ -71,11 +71,11 @@ describe("parseHurdat2StormHeaderLine", () => {
   });
 });
 
-describe("processFloridaHurricanesFromHurdata2Data", () => {
+describe("processFloridaHurricanesFromHurdat2Data", () => {
   it("processes Florida hurricanes from HURDAT2 data", () => {
     const floridaHurricanes = processFloridaHurricanesFromHurdat2Data(FL_SAMPLE);
     expect(floridaHurricanes).toHaveLength(1);
-    expect(floridaHurricanes[0].maximumSustainedWindKt).toBe(80);
+    expect(floridaHurricanes[0].maximumSustainedWindKt).toBe(90);
     expect(floridaHurricanes[0].longitude).toBeLessThan(0);
   });
 });

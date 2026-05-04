@@ -1,15 +1,7 @@
-/**
- * HURDAT2 / best-track text: each storm starts with a metadata line
- * (basin id, name, number of following track rows), then comma-separated track rows.
- *
- * Track rows begin with an 8-digit date (YYYYMMDD); storm ids match two letters + six digits.
- * We detect storm headers by that id pattern (not by “three non-empty fields”, which can
- * match the first tokens of a track row).
- */
-
 import { Hurdat2TrackRow, parseHurdat2TrackLine } from "./hurdat2Track";
 import { isPointInFlorida } from "./isPointInFlorida";
 
+/** The main hurricane record type we want to eventually display in the app. */
 export type FloridaHurricane = {
   name: string;
   dateOfLandfall: Date;
@@ -98,14 +90,10 @@ export type Hurdat2StormChunk = {
 };
 
 /**
- * Splits full HURDAT2 file text into per-storm chunks. Each `trackData` joins that storm’s
- * best-track lines (no storm metadata line included).
- *
- * Declared `entryCount` on each header is compared to the number of track rows actually
- * collected; see `entryCountMismatch` on each chunk. Delimiters are still storm headers so
- * inconsistent counts never cause silent data loss.
+ * Splits full HURDAT2 text into per-storm chunks (header line + following best-track rows).
+ * Used internally by {@link processFloridaHurricanesFromHurdat2Data};
  */
-export function groupHurdat2IntoStormChunks(text: string): Hurdat2StormChunk[] {
+function splitHurdat2TextIntoStormChunks(text: string): Hurdat2StormChunk[] {
   const lines = text.split(/\r?\n/);
   const stormChunks: Hurdat2StormChunk[] = [];
   let headerLine: string | null = null;
@@ -139,8 +127,9 @@ export function groupHurdat2IntoStormChunks(text: string): Hurdat2StormChunk[] {
   return stormChunks;
 }
 
+/** Processes HURDAT2 data to extract Florida hurricanes. */
 export function processFloridaHurricanesFromHurdat2Data(text: string): FloridaHurricane[] {
-  const storms = groupHurdat2IntoStormChunks(text);
+  const storms = splitHurdat2TextIntoStormChunks(text);
 
   return storms.flatMap((storm): FloridaHurricane[] => {
     const header = storm.headerParsed;
@@ -182,18 +171,18 @@ export function processFloridaHurricanesFromHurdat2Data(text: string): FloridaHu
 function toSignedLatitude(degrees: number, hemisphere: "N" | "S"): number {
   return hemisphere === "S" ? -Math.abs(degrees) : Math.abs(degrees);
 }
-
 function toSignedLongitude(degrees: number, hemisphere: "W" | "E"): number {
   return hemisphere === "W" ? -Math.abs(degrees) : Math.abs(degrees);
 }
 
+/** Checks if a track row is within the Florida polygon. */
 function isInFloridaPolygon(trackRow: Hurdat2TrackRow): boolean {
-  // Very simple bounds; refine later (polygon/coastline) when needed.
   const lat = trackRow.latitudeDegrees * (trackRow.latitudeHemisphere === "S" ? -1 : 1);
   const lon = toSignedLongitude(trackRow.longitudeDegrees, trackRow.longitudeHemisphere);
   return isPointInFlorida(lat, lon);
 }
 
+/** Checks if a track row is a Florida hurricane. */
 function isFloridaHurricaneTrackRow(trackRow: Hurdat2TrackRow): boolean {
   return trackRow.systemStatus === "HU" && isInFloridaPolygon(trackRow);
 }
