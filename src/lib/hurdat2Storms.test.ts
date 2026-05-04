@@ -3,7 +3,7 @@ import {
   isHurdat2StormHeaderLine,
   parseHurdat2StormHeaderLine,
   parseHurdat2StormId,
-  processFloridaHurricanesFromHurdata2Data,
+  processFloridaHurricanesFromHurdat2Data,
 } from "./hurdat2Storms";
 
 const FL_SAMPLE =
@@ -73,7 +73,7 @@ describe("parseHurdat2StormHeaderLine", () => {
 
 describe("processFloridaHurricanesFromHurdata2Data", () => {
   it("processes Florida hurricanes from HURDAT2 data", () => {
-    const floridaHurricanes = processFloridaHurricanesFromHurdata2Data(FL_SAMPLE);
+    const floridaHurricanes = processFloridaHurricanesFromHurdat2Data(FL_SAMPLE);
     expect(floridaHurricanes).toHaveLength(1);
     expect(floridaHurricanes[0].maximumSustainedWindKt).toBe(80);
     expect(floridaHurricanes[0].longitude).toBeLessThan(0);

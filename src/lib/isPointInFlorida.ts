@@ -1,6 +1,9 @@
 import booleanPointInPolygon from "@turf/boolean-point-in-polygon";
 import { point } from "@turf/helpers";
+import type { Feature, GeoJsonProperties, Polygon } from "geojson";
 import floridaGeoJson from "../data/florida.json";
+
+type PolygonFeature = Feature<Polygon, GeoJsonProperties>;
 
 /**
  * Returns true when the (lat, lon) point lies inside the Florida polygon.
@@ -10,9 +13,8 @@ import floridaGeoJson from "../data/florida.json";
  * - longitude: East positive, West negative
  */
 export function isPointInFlorida(latitude: number, longitude: number): boolean {
-  const data = floridaGeoJson as any;
-  const geometry = data?.geometry;
-  if (!geometry) return false;
+  const data = floridaGeoJson as unknown as PolygonFeature;
+  const geometry = data.geometry;
   return booleanPointInPolygon(point([longitude, latitude]), geometry);
 }
 

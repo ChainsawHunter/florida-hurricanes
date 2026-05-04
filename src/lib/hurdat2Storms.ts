@@ -139,7 +139,7 @@ export function groupHurdat2IntoStormChunks(text: string): Hurdat2StormChunk[] {
   return stormChunks;
 }
 
-export function processFloridaHurricanesFromHurdata2Data(text: string): FloridaHurricane[] {
+export function processFloridaHurricanesFromHurdat2Data(text: string): FloridaHurricane[] {
   const storms = groupHurdat2IntoStormChunks(text);
 
   return storms.flatMap((storm): FloridaHurricane[] => {
@@ -187,7 +187,7 @@ function toSignedLongitude(degrees: number, hemisphere: "W" | "E"): number {
   return hemisphere === "W" ? -Math.abs(degrees) : Math.abs(degrees);
 }
 
-function inFloridaBoundingBox(trackRow: Hurdat2TrackRow): boolean {
+function isInFloridaPolygon(trackRow: Hurdat2TrackRow): boolean {
   // Very simple bounds; refine later (polygon/coastline) when needed.
   const lat = trackRow.latitudeDegrees * (trackRow.latitudeHemisphere === "S" ? -1 : 1);
   const lon = toSignedLongitude(trackRow.longitudeDegrees, trackRow.longitudeHemisphere);
@@ -195,5 +195,5 @@ function inFloridaBoundingBox(trackRow: Hurdat2TrackRow): boolean {
 }
 
 function isFloridaHurricaneTrackRow(trackRow: Hurdat2TrackRow): boolean {
-  return trackRow.systemStatus === "HU" && inFloridaBoundingBox(trackRow);
+  return trackRow.systemStatus === "HU" && isInFloridaPolygon(trackRow);
 }
