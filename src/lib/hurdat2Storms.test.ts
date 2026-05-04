@@ -76,7 +76,6 @@ describe("processFloridaHurricanesFromHurdata2Data", () => {
     const floridaHurricanes = processFloridaHurricanesFromHurdata2Data(FL_SAMPLE);
     expect(floridaHurricanes).toHaveLength(1);
     expect(floridaHurricanes[0].maximumSustainedWindKt).toBe(80);
-    // Longitude should be signed (W negative).
     expect(floridaHurricanes[0].longitude).toBeLessThan(0);
   });
 });

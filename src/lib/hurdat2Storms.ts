@@ -140,55 +140,43 @@ export function groupHurdat2IntoStormChunks(text: string): Hurdat2StormChunk[] {
 }
 
 export function processFloridaHurricanesFromHurdata2Data(text: string): FloridaHurricane[] {
-  const lines = text.split(/\r?\n/);
-  const floridaHurricanes: FloridaHurricane[] = [];
-  let currStormHeader: Hurdat2StormHeaderParsed | null = null;
-  let currFloridaHurricaneTrackLines: Hurdat2TrackRow[] = [];
+  const storms = groupHurdat2IntoStormChunks(text);
 
-  // When we find a new storm header, we flush the current storm and start a new one.
-  const flush = () => {
-    if (currStormHeader === null) return;
-    if (currFloridaHurricaneTrackLines.length === 0) return;
-    const maxWind = currFloridaHurricaneTrackLines.reduce((max, row) => {
+  return storms.flatMap((storm): FloridaHurricane[] => {
+    const header = storm.headerParsed;
+    if (!header?.idParts || header.idParts.basin !== "AL") return [];
+
+    const trackRows = storm.trackData
+      .split("\n")
+      .map((line) => parseHurdat2TrackLine(line))
+      .filter((r): r is Hurdat2TrackRow => r !== null)
+      .filter(isFloridaHurricaneTrackRow);
+
+    if (trackRows.length === 0) return [];
+
+    const first = trackRows[0];
+    const maxWind = trackRows.reduce((max, row) => {
       const v = row.maximumSustainedWindKt ?? 0;
       return v > max ? v : max;
     }, 0);
-    const floridaHurricane = {
-      name: currStormHeader.name,
-      // JS Date month is 0-based; HURDAT2 month is 1-based.
-      dateOfLandfall: new Date(
-        currStormHeader.idParts?.year ?? 0,
-        currFloridaHurricaneTrackLines[0].month - 1,
-        currFloridaHurricaneTrackLines[0].day,
-        currFloridaHurricaneTrackLines[0].hourUtc,
-        currFloridaHurricaneTrackLines[0].minuteUtc,
-      ),
-      latitude: toSignedLatitude(currFloridaHurricaneTrackLines[0].latitudeDegrees, currFloridaHurricaneTrackLines[0].latitudeHemisphere),
-      longitude: toSignedLongitude(currFloridaHurricaneTrackLines[0].longitudeDegrees, currFloridaHurricaneTrackLines[0].longitudeHemisphere),
-      maximumSustainedWindKt: maxWind,
-    };
-    floridaHurricanes.push(floridaHurricane);
-    currStormHeader = null;
-    currFloridaHurricaneTrackLines = [];
-  }
 
-  for (const line of lines) {
-    if (isHurdat2StormHeaderLine(line)) {
-      flush();
-      const headerParsed = parseHurdat2StormHeaderLine(line);
-      if (headerParsed !== null && headerParsed.idParts !== null && headerParsed.idParts.basin === "AL") {
-        currStormHeader = headerParsed;
-      }
-    } else if (currStormHeader !== null) {
-      const trackRow = parseHurdat2TrackLine(line);
-      if (trackRow !== null && isFloridaHurricaneTrackRow(trackRow)) {
-        currFloridaHurricaneTrackLines.push(trackRow);
-      }
-    }
-  }
-
-  flush();
-  return floridaHurricanes;
+    return [
+      {
+        name: header.name,
+        // JS Date month is 0-based; HURDAT2 month is 1-based.
+        dateOfLandfall: new Date(
+          header.idParts.year,
+          first.month - 1,
+          first.day,
+          first.hourUtc,
+          first.minuteUtc,
+        ),
+        latitude: toSignedLatitude(first.latitudeDegrees, first.latitudeHemisphere),
+        longitude: toSignedLongitude(first.longitudeDegrees, first.longitudeHemisphere),
+        maximumSustainedWindKt: maxWind,
+      },
+    ];
+  });
 }
 
 function toSignedLatitude(degrees: number, hemisphere: "N" | "S"): number {
