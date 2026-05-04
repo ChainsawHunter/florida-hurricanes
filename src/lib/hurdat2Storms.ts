@@ -176,12 +176,12 @@ function toSignedLongitude(degrees: number, hemisphere: "W" | "E"): number {
 
 /** Checks if a track row is within the Florida polygon. */
 function isInFloridaPolygon(trackRow: Hurdat2TrackRow): boolean {
-  const lat = trackRow.latitudeDegrees * (trackRow.latitudeHemisphere === "S" ? -1 : 1);
+  const lat = toSignedLatitude(trackRow.latitudeDegrees, trackRow.latitudeHemisphere);
   const lon = toSignedLongitude(trackRow.longitudeDegrees, trackRow.longitudeHemisphere);
   return isPointInFlorida(lat, lon);
 }
 
-/** Checks if a track row is a Florida hurricane. */
+/** Checks if a track row is a Florida hurricane. To be considered a hurricane, it must be in Florida and have a system status of "HU". */
 function isFloridaHurricaneTrackRow(trackRow: Hurdat2TrackRow): boolean {
   return trackRow.systemStatus === "HU" && isInFloridaPolygon(trackRow);
 }
