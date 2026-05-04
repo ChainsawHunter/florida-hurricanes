@@ -1,7 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
   groupHurdat2IntoStormCsvChunks,
-  hurdat2TrackCsvStrings,
   isHurdat2StormHeaderLine,
   parseHurdat2StormHeaderLine,
 } from "./hurdat2Storms";
@@ -52,9 +51,32 @@ describe("groupHurdat2IntoStormCsvChunks", () => {
 
     expect(chunks[0].headerLine).toContain("AL011851");
     expect(chunks[0].trackCsv.split("\n").filter(Boolean)).toHaveLength(2);
+    expect(chunks[0].headerParsed).toEqual({
+      id: "AL011851",
+      name: "UNNAMED",
+      entryCount: 2,
+    });
+    expect(chunks[0].entryCountMismatch).toBe(false);
 
     expect(chunks[1].headerLine).toContain("AL021851");
     expect(chunks[1].trackCsv.split("\n").filter(Boolean)).toHaveLength(1);
+    expect(chunks[1].headerParsed).toEqual({
+      id: "AL021851",
+      name: "OTHER_ONE",
+      entryCount: 1,
+    });
+    expect(chunks[1].entryCountMismatch).toBe(false);
+  });
+
+  it("flags entryCountMismatch when header count ≠ track rows", () => {
+    const bad = `AL011851,            UNNAMED,     5,
+18510625, 0000,  , HU, 28.0N,  94.8W,  80, -999,
+`;
+    const chunks = groupHurdat2IntoStormCsvChunks(bad);
+    expect(chunks).toHaveLength(1);
+    expect(chunks[0].headerParsed?.entryCount).toBe(5);
+    expect(chunks[0].trackCsv.split("\n").filter(Boolean)).toHaveLength(1);
+    expect(chunks[0].entryCountMismatch).toBe(true);
   });
 
   it("ignores lines before the first storm header", () => {
@@ -70,14 +92,5 @@ ${SAMPLE}`;
     const chunks = groupHurdat2IntoStormCsvChunks(crlf);
     expect(chunks).toHaveLength(2);
     expect(chunks[0].trackCsv.split("\n")).toHaveLength(2);
-  });
-});
-
-describe("hurdat2TrackCsvStrings", () => {
-  it("returns only track CSV strings in order", () => {
-    const tracks = hurdat2TrackCsvStrings(SAMPLE);
-    expect(tracks).toHaveLength(2);
-    expect(tracks[0]).toContain("18510625");
-    expect(tracks[1]).toContain("18510705");
   });
 });

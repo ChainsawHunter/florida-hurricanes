@@ -34,27 +34,43 @@ export function parseHurdat2StormHeaderLine(line: string): { id: string; name: s
 export type Hurdat2StormCsvChunk = {
   /** Raw storm metadata line (id, name, entry count). */
   headerLine: string;
-  /** Newline-separated track rows only — safe to pass to `parseCsvText` for row/column parsing. */
+  /** Newline-separated best-track rows for this storm (comma-separated fields per line). */
   trackCsv: string;
+  /** Parsed header fields when the line matches `parseHurdat2StormHeaderLine`. */
+  headerParsed: { id: string; name: string; entryCount: number } | null;
+  /**
+   * True when `headerParsed` is set and its `entryCount` does not match the number of track
+   * lines collected before the next storm (or EOF). We still collect all lines until the next
+   * header so a wrong count in the file does not drop real track rows.
+   */
+  entryCountMismatch: boolean;
 };
 
 /**
- * Splits full HURDAT2 file text into per-storm chunks. Each `trackCsv` is one string you can
- * pass to `parseCsvText` (no synthetic header row; rows are raw best-track lines).
+ * Splits full HURDAT2 file text into per-storm chunks. Each `trackCsv` joins that storm’s
+ * best-track lines (no storm metadata line included).
+ *
+ * Declared `entryCount` on each header is compared to the number of track rows actually
+ * collected; see `entryCountMismatch` on each chunk. Delimiters are still storm headers so
+ * inconsistent counts never cause silent data loss.
  */
 export function groupHurdat2IntoStormCsvChunks(text: string): Hurdat2StormCsvChunk[] {
   const lines = text.split(/\r?\n/);
-  const chunks: Hurdat2StormCsvChunk[] = [];
+  const stormChunks: Hurdat2StormCsvChunk[] = [];
   let headerLine: string | null = null;
-  const trackLines: string[] = [];
+  const stormLines: string[] = [];
 
   const flush = () => {
     if (headerLine === null) return;
-    chunks.push({
+    const headerParsed = parseHurdat2StormHeaderLine(headerLine);
+    const trackLineCount = stormLines.length;
+    stormChunks.push({
       headerLine,
-      trackCsv: trackLines.join("\n"),
+      trackCsv: stormLines.join("\n"),
+      headerParsed,
+      entryCountMismatch: headerParsed !== null && headerParsed.entryCount !== trackLineCount,
     });
-    trackLines.length = 0;
+    stormLines.length = 0;
     headerLine = null;
   };
 
@@ -64,19 +80,10 @@ export function groupHurdat2IntoStormCsvChunks(text: string): Hurdat2StormCsvChu
       flush();
       headerLine = line.trimEnd();
     } else if (headerLine !== null) {
-      trackLines.push(line.trimEnd());
+      stormLines.push(line.trimEnd());
     }
   }
   flush();
 
-  return chunks;
-}
-
-/** Same groups as {@link groupHurdat2IntoStormCsvChunks}, but only the track CSV strings. */
-export function hurdat2TrackCsvStrings(text: string): string[] {
-  return groupHurdat2IntoStormCsvChunks(text).map((c) => c.trackCsv);
-}
-
-export async function readFileAsText(file: File): Promise<string> {
-  return file.text();
+  return stormChunks;
 }

@@ -1,10 +1,12 @@
 import { useCallback, useState } from "react";
-import { parseCsvFile } from "./lib/parseCsv";
-import type { ParsedCsv } from "./types/csv";
+import {
+  groupHurdat2IntoStormCsvChunks,
+  type Hurdat2StormCsvChunk,
+} from "./lib/hurdat2Storms";
 import "./App.css";
 
 export function App() {
-  const [parsed, setParsed] = useState<ParsedCsv | null>(null);
+  const [chunks, setChunks] = useState<Hurdat2StormCsvChunk[]>([]);
   const [fileName, setFileName] = useState<string | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
 
@@ -12,12 +14,12 @@ export function App() {
     const file = e.target.files?.[0];
     e.target.value = "";
     setLoadError(null);
-    setParsed(null);
+    setChunks([]);
     setFileName(null);
     if (!file) return;
     try {
-      const result = await parseCsvFile(file);
-      setParsed(result);
+      const text = await file.text();
+      setChunks(groupHurdat2IntoStormCsvChunks(text));
       setFileName(file.name);
     } catch (err) {
       setLoadError(err instanceof Error ? err.message : "Failed to read file");
@@ -26,55 +28,47 @@ export function App() {
 
   return (
     <div className="app">
-      <h1>CSV parser</h1>
-      <p className="lead">
-        Choose a CSV file. The first row is treated as column headers; remaining rows are data.
-      </p>
+      <h1>HURDAT2 storms</h1>
+      <p className="lead">Choose a HURDAT2-format text file (storm header lines plus best-track rows).</p>
 
       <div className="panel">
         <div className="file-row">
-          <label htmlFor="csv-file">File</label>
-          <input id="csv-file" type="file" accept=".csv,text/csv,text/plain" onChange={onFile} />
+          <label htmlFor="hurdat-file">File</label>
+          <input
+            id="hurdat-file"
+            type="file"
+            accept=".txt,text/plain,.dat"
+            onChange={onFile}
+          />
         </div>
         {fileName && <p className="meta">Loaded: {fileName}</p>}
         {loadError && <p className="errors">{loadError}</p>}
-        {parsed && parsed.errors.length > 0 && (
-          <ul className="errors">
-            {parsed.errors.map((err, i) => (
-              <li key={i}>
-                {err.row != null ? `Row ${err.row}: ` : ""}
-                {err.message}
-              </li>
-            ))}
-          </ul>
-        )}
       </div>
 
-      {parsed && parsed.headers.length > 0 && (
-        <div className="table-wrap">
-          <table>
-            <thead>
-              <tr>
-                {parsed.headers.map((h, i) => (
-                  <th key={i}>{h || `(column ${i + 1})`}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {parsed.rows.map((row, ri) => (
-                <tr key={ri}>
-                  {parsed.headers.map((_, ci) => (
-                    <td key={ci}>{row[ci] ?? ""}</td>
-                  ))}
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+      {chunks.length > 0 && (
+        <p className="meta">{chunks.length} storm{chunks.length === 1 ? "" : "s"} found</p>
       )}
 
-      {parsed && parsed.headers.length === 0 && !loadError && (
-        <p className="empty">No rows found in this file.</p>
+      {chunks.length > 0 && (
+        <ul className="storm-list">
+          {chunks.map((c, i) => {
+            const trackRows = c.trackCsv.split("\n").filter((line) => line.trim() !== "");
+            const label = c.headerParsed?.id ?? c.headerLine.slice(0, 12);
+            return (
+              <li key={i} className="storm-list__item">
+                <span className="storm-list__id">{label}</span>
+                <span className="storm-list__meta">
+                  {c.headerParsed?.name ?? "—"} · {trackRows.length} track row{trackRows.length === 1 ? "" : "s"}
+                  {c.entryCountMismatch ? " · header count mismatch" : ""}
+                </span>
+              </li>
+            );
+          })}
+        </ul>
+      )}
+
+      {chunks.length === 0 && fileName && !loadError && (
+        <p className="empty">No storm blocks found (expected basin id header lines such as AL011851,…).</p>
       )}
     </div>
   );
