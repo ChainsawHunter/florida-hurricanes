@@ -59,8 +59,8 @@ export function App() {
           <table>
             <thead>
               <tr>
-                <th>Date of Lanfall</th>
-                <th>Hurricane Nme</th>
+                <th>Date of Landfall</th>
+                <th>Hurricane Name</th>
                 <th>Max Wind in Knots</th>
               </tr>
             </thead>
