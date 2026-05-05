@@ -3,6 +3,10 @@
  * Files use comma-separated values; fixed “spaces” in the spec correspond to these fields.
  */
 
+// -----------------------------
+// Public types
+// -----------------------------
+
 /** Record identifier (space 17 / field before status); blank field normalized to `""`. */
 export type Hurdat2RecordIdentifier = "" | "L" | "P" | "I" | "S" | "T";
 
@@ -17,9 +21,7 @@ export type Hurdat2SystemStatus =
   | "LO"
   | "DB";
 
-/**
- * One best-track observation row after storm header lines.
- */
+/** One best-track observation row after storm header lines. */
 export type Hurdat2TrackRow = {
   /** Calendar year (from date field YYYYMMDD). */
   year: number;
@@ -48,9 +50,26 @@ export type Hurdat2TrackRow = {
   maximumSustainedWindKt: number | null;
 };
 
-const SYSTEM_STATUSES = new Set<string>(["TD", "TS", "HU", "EX", "SD", "SS", "LO", "DB"]);
+// -----------------------------
+// Parsing helpers
+// -----------------------------
 
-function parseInt(raw: string | undefined): number | null {
+const REQUIRED_FIELD_COUNT = 20;
+const DATE_YYYYMMDD = /^\d{8}$/;
+const TIME_HHMM = /^\d{3,4}$/;
+
+const SYSTEM_STATUSES = new Set<Hurdat2SystemStatus>([
+  "TD",
+  "TS",
+  "HU",
+  "EX",
+  "SD",
+  "SS",
+  "LO",
+  "DB",
+]);
+
+function parseNumber(raw: string | undefined): number | null {
   if (raw === undefined) return null;
   const t = raw.trim();
   if (t === "") return null;
@@ -60,8 +79,7 @@ function parseInt(raw: string | undefined): number | null {
 }
 
 function parseLatToken(token: string): { deg: number; hemi: "N" | "S" } | null {
-  const t = token.trim();
-  const m = t.match(/^(\d+\.?\d*)\s*([NS])$/i);
+  const m = token.trim().match(/^(\d+\.?\d*)\s*([NS])$/i);
   if (!m) return null;
   const deg = Number(m[1]);
   if (!Number.isFinite(deg)) return null;
@@ -71,8 +89,7 @@ function parseLatToken(token: string): { deg: number; hemi: "N" | "S" } | null {
 }
 
 function parseLonToken(token: string): { deg: number; hemi: "W" | "E" } | null {
-  const t = token.trim();
-  const m = t.match(/^(\d+\.?\d*)\s*([EW])$/i);
+  const m = token.trim().match(/^(\d+\.?\d*)\s*([EW])$/i);
   if (!m) return null;
   const deg = Number(m[1]);
   if (!Number.isFinite(deg)) return null;
@@ -89,10 +106,32 @@ function normalizeRecordId(raw: string | undefined): Hurdat2RecordIdentifier {
 }
 
 function parseStatus(raw: string): Hurdat2SystemStatus | null {
-  const s = raw.trim().toUpperCase();
+  const s = raw.trim().toUpperCase() as Hurdat2SystemStatus;
   if (!SYSTEM_STATUSES.has(s)) return null;
-  return s as Hurdat2SystemStatus;
+  return s;
 }
+
+function parseDateYYYYMMDD(dateStr: string): { year: number; month: number; day: number } | null {
+  if (!DATE_YYYYMMDD.test(dateStr)) return null;
+  const year = Number(dateStr.slice(0, 4));
+  const month = Number(dateStr.slice(4, 6));
+  const day = Number(dateStr.slice(6, 8));
+  if (!Number.isFinite(year) || !Number.isFinite(month) || !Number.isFinite(day)) return null;
+  return { year, month, day };
+}
+
+function parseTimeHHMM(timeStr: string): { hourUtc: number; minuteUtc: number } | null {
+  if (!TIME_HHMM.test(timeStr)) return null;
+  const timePadded = timeStr.padStart(4, "0");
+  const hourUtc = Number(timePadded.slice(0, 2));
+  const minuteUtc = Number(timePadded.slice(2, 4));
+  if (!Number.isFinite(hourUtc) || !Number.isFinite(minuteUtc)) return null;
+  return { hourUtc, minuteUtc };
+}
+
+// -----------------------------
+// Public API
+// -----------------------------
 
 /**
  * Parses one comma-separated HURDAT2 best-track line into {@link Hurdat2TrackRow}.
@@ -102,21 +141,13 @@ function parseStatus(raw: string): Hurdat2SystemStatus | null {
  */
 export function parseHurdat2TrackLine(line: string): Hurdat2TrackRow | null {
   const fields = line.split(",").map((s) => s.trim());
-  if (fields.length < 20) return null;
+  if (fields.length < REQUIRED_FIELD_COUNT) return null;
 
-  const dateStr = fields[0];
-  if (!/^\d{8}$/.test(dateStr)) return null;
-  const year = Number(dateStr.slice(0, 4));
-  const month = Number(dateStr.slice(4, 6));
-  const day = Number(dateStr.slice(6, 8));
-  if (!Number.isFinite(year) || !Number.isFinite(month) || !Number.isFinite(day)) return null;
+  const date = parseDateYYYYMMDD(fields[0] ?? "");
+  if (!date) return null;
 
-  const timeStr = fields[1];
-  if (!/^\d{3,4}$/.test(timeStr)) return null;
-  const timePadded = timeStr.padStart(4, "0");
-  const hourUtc = Number(timePadded.slice(0, 2));
-  const minuteUtc = Number(timePadded.slice(2, 4));
-  if (!Number.isFinite(hourUtc) || !Number.isFinite(minuteUtc)) return null;
+  const time = parseTimeHHMM(fields[1] ?? "");
+  if (!time) return null;
 
   const recordIdentifier = normalizeRecordId(fields[2]);
   const systemStatus = parseStatus(fields[3] ?? "");
@@ -126,20 +157,20 @@ export function parseHurdat2TrackLine(line: string): Hurdat2TrackRow | null {
   const lon = parseLonToken(fields[5] ?? "");
   if (!lat || !lon) return null;
 
-  const maximumSustainedWindKt = parseInt(fields[6]);
+  const maximumSustainedWindKt = parseNumber(fields[6]);
 
   return {
-    year,
-    month,
-    day,
-    hourUtc,
-    minuteUtc,
+    year: date.year,
+    month: date.month,
+    day: date.day,
+    hourUtc: time.hourUtc,
+    minuteUtc: time.minuteUtc,
     recordIdentifier,
     systemStatus,
     latitudeDegrees: lat.deg,
     latitudeHemisphere: lat.hemi,
     longitudeDegrees: lon.deg,
     longitudeHemisphere: lon.hemi,
-    maximumSustainedWindKt
+    maximumSustainedWindKt,
   };
 }
