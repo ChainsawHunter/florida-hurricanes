@@ -6,14 +6,36 @@ import {
   processFloridaHurricanesFromHurdat2Data,
 } from "./hurdat2Storms";
 
-const FL_SAMPLE =
-`AL011851,            FL_STORM,     3,
-18510625, 1800,  , HU, 27.0N,  80.0W,  80, -999, -999, -999, -999, -999, -999, -999, -999, -999, -999, -999, -999, -999, -999
+const FL_SAMPLE_SINGLE_STORM =
+  `AL011851,            FL_STORM,     3,
+18510625, 1800,  , HU, 25.0N,  75.0W,  80, -999, -999, -999, -999, -999, -999, -999, -999, -999, -999, -999, -999, -999, -999
 18510625, 2100,  , HU, 28.2N,  81.2W,  80, -999, -999, -999, -999, -999, -999, -999, -999, -999, -999, -999, -999, -999, -999
 18510626, 0000,  , HU, 29.0N,  82.0W,  90, -999, -999, -999, -999, -999, -999, -999, -999, -999, -999, -999, -999, -999, -999
 
 AL021851,            TX_STORM,     1,
 18510625, 2100,  , HU, 28.2N,  96.8W,  80, -999, -999, -999, -999, -999, -999, -999, -999, -999, -999, -999, -999, -999, -999
+`;
+
+const FL_SAMPLE_TWO_STORMS =
+  FL_SAMPLE_SINGLE_STORM +
+  `
+AL031851,            FL_STORM_2,     2,
+18510801, 0000,  , HU, 25.0N,  75.0W,  70, -999, -999, -999, -999, -999, -999, -999, -999, -999, -999, -999, -999, -999, -999
+18510801, 0600,  , HU, 27.5N,  80.2W,  75, -999, -999, -999, -999, -999, -999, -999, -999, -999, -999, -999, -999, -999, -999
+`;
+
+const FL_SAMPLE_TWO_LANDFALLS_SAME_STORM =
+  `AL011851,            FL_STORM,     4,
+18510625, 0000,  , HU, 25.0N,  75.0W,  80, -999, -999, -999, -999, -999, -999, -999, -999, -999, -999, -999, -999, -999, -999
+18510625, 0600,  , HU, 27.5N,  80.2W,  85, -999, -999, -999, -999, -999, -999, -999, -999, -999, -999, -999, -999, -999, -999
+18510625, 1200,  , HU, 25.0N,  75.0W,  80, -999, -999, -999, -999, -999, -999, -999, -999, -999, -999, -999, -999, -999, -999
+18510625, 1800,  , HU, 27.5N,  80.2W,  90, -999, -999, -999, -999, -999, -999, -999, -999, -999, -999, -999, -999, -999, -999
+`;
+
+const FL_SAMPLE_NO_ENTRY =
+  `AL011851,            FL_STORM,     2,
+18510625, 0000,  , HU, 28.2N,  81.2W,  80, -999, -999, -999, -999, -999, -999, -999, -999, -999, -999, -999, -999, -999, -999
+18510625, 0600,  , HU, 29.0N,  82.0W,  90, -999, -999, -999, -999, -999, -999, -999, -999, -999, -999, -999, -999, -999, -999
 `;
 
 describe("isHurdat2StormHeaderLine", () => {
@@ -74,37 +96,40 @@ describe("parseHurdat2StormHeaderLine", () => {
 
 describe("processFloridaHurricanesFromHurdat2Data", () => {
   it("processes Florida hurricanes from HURDAT2 data", () => {
-    const floridaHurricanes = processFloridaHurricanesFromHurdat2Data(FL_SAMPLE);
+    const floridaHurricanes = processFloridaHurricanesFromHurdat2Data(FL_SAMPLE_SINGLE_STORM);
     expect(floridaHurricanes).toHaveLength(1);
     expect(floridaHurricanes[0].maximumSustainedWindKt).toBe(90);
     expect(floridaHurricanes[0].longitude).toBeLessThan(0);
     expect(floridaHurricanes[0].landfallRowEvents).toHaveLength(1);
     expect(floridaHurricanes[0].landfallRowEvents[0]?.landfallDateTimeDisplay).toBe(
-      "06/25/1851 - 18:00",
+      "06/25/1851 - 21:00",
     );
   });
   it("processes multiple Florida hurricanes from HURDAT2 data", () => {
-    const floridaHurricanes = processFloridaHurricanesFromHurdat2Data(FL_SAMPLE);
+    const floridaHurricanes = processFloridaHurricanesFromHurdat2Data(FL_SAMPLE_TWO_STORMS);
     expect(floridaHurricanes).toHaveLength(2);
     expect(floridaHurricanes[0].maximumSustainedWindKt).toBe(90);
     expect(floridaHurricanes[0].longitude).toBeLessThan(0);
     expect(floridaHurricanes[0].landfallRowEvents).toHaveLength(1);
     expect(floridaHurricanes[0].landfallRowEvents[0]?.landfallDateTimeDisplay).toBe(
-      "06/25/1851 - 18:00",
+      "06/25/1851 - 21:00",
     );
   });
   it("processes Florida hurricanes from HURDAT2 data with multiple landfall rows", () => {
-    const floridaHurricanes = processFloridaHurricanesFromHurdat2Data(FL_SAMPLE);
+    const floridaHurricanes = processFloridaHurricanesFromHurdat2Data(FL_SAMPLE_TWO_LANDFALLS_SAME_STORM);
     expect(floridaHurricanes).toHaveLength(1);
     expect(floridaHurricanes[0].maximumSustainedWindKt).toBe(90);
     expect(floridaHurricanes[0].longitude).toBeLessThan(0);
-    expect(floridaHurricanes[0].landfallRowEvents).toHaveLength(1);
+    expect(floridaHurricanes[0].landfallRowEvents).toHaveLength(2);
     expect(floridaHurricanes[0].landfallRowEvents[0]?.landfallDateTimeDisplay).toBe(
+      "06/25/1851 - 06:00",
+    );
+    expect(floridaHurricanes[0].landfallRowEvents[1]?.landfallDateTimeDisplay).toBe(
       "06/25/1851 - 18:00",
     );
   });
   it("processes Florida hurricanes from HURDAT2 data with no landfall rows", () => {
-    const floridaHurricanes = processFloridaHurricanesFromHurdat2Data(FL_SAMPLE);
+    const floridaHurricanes = processFloridaHurricanesFromHurdat2Data(FL_SAMPLE_NO_ENTRY);
     expect(floridaHurricanes).toHaveLength(0);
   });
 });

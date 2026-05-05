@@ -246,11 +246,13 @@ function isInFloridaPolygon(trackRow: Hurdat2TrackRow): boolean {
 function findFloridaEntryRows(trackRows: Hurdat2TrackRow[]): Hurdat2TrackRow[] {
   const entryRows: Hurdat2TrackRow[] = [];
   let prevInFlorida = false;
+  let hasPrev = false;
 
   for (const row of trackRows) {
     const inFlorida = isInFloridaPolygon(row);
-    if (!prevInFlorida && inFlorida) entryRows.push(row);
+    if (hasPrev && !prevInFlorida && inFlorida) entryRows.push(row);
     prevInFlorida = inFlorida;
+    hasPrev = true;
   }
 
   return entryRows;
