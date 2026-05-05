@@ -4,7 +4,10 @@ import { isPointInFlorida } from "./isPointInFlorida";
 /** The main hurricane record type we want to eventually display in the app. */
 export type FloridaHurricane = {
   name: string;
-  dateOfLandfall: Date;
+  /** UTC instant of the **first** track row with status `HU` whose center lies in Florida. */
+  firstHuInFloridaDate: Date;
+  /** `DD/MM/YYYY` from that row’s HURDAT2 calendar date fields (not locale-formatted). */
+  firstHuInFloridaDateDisplay: string;
   latitude: number;
   longitude: number;
   maximumSustainedWindKt: number;
@@ -152,19 +155,29 @@ export function processFloridaHurricanesFromHurdat2Data(text: string): FloridaHu
       {
         name: header.name,
         // JS Date month is 0-based; HURDAT2 month is 1-based.
-        dateOfLandfall: new Date(
-          header.idParts.year,
+        firstHuInFloridaDate: new Date(
+          first.year,
           first.month - 1,
           first.day,
           first.hourUtc,
           first.minuteUtc,
         ),
+        firstHuInFloridaDateDisplay: formatMmDdYyyy(first.day, first.month, first.year),
         latitude: toSignedLatitude(first.latitudeDegrees, first.latitudeHemisphere),
         longitude: toSignedLongitude(first.longitudeDegrees, first.longitudeHemisphere),
         maximumSustainedWindKt: maxWind,
       },
     ];
   });
+}
+
+function pad2(n: number): string {
+  return String(n).padStart(2, "0");
+}
+
+/** `MM/DD/YYYY` using the HURDAT2 row’s calendar fields (month/day/year). */
+function formatMmDdYyyy(day: number, month: number, year: number): string {
+  return `${pad2(month)}/${pad2(day)}/${String(year)}`;
 }
 
 function toSignedLatitude(degrees: number, hemisphere: "N" | "S"): number {
@@ -181,7 +194,7 @@ function isInFloridaPolygon(trackRow: Hurdat2TrackRow): boolean {
   return isPointInFlorida(lat, lon);
 }
 
-/** Checks if a track row is a Florida hurricane. To be considered a hurricane, it must be in Florida and have a system status of "HU". */
+/** In-Florida hurricane track row: intensity `HU` and center position inside the Florida polygon. */
 function isFloridaHurricaneTrackRow(trackRow: Hurdat2TrackRow): boolean {
   return trackRow.systemStatus === "HU" && isInFloridaPolygon(trackRow);
 }

@@ -30,8 +30,9 @@ export function App() {
     <div className="app">
       <h1>Florida hurricanes</h1>
       <p className="lead">
-        Choose a HURDAT2-format text file. The app extracts hurricanes whose track positions fall within a simple
-        Florida bounding box.
+        Choose a HURDAT2-format text file. The app lists Atlantic storms that had at least one best-track
+        point with status <code>HU</code> whose center lies inside the Florida polygon (no reliance on the
+        HURDAT2 record-identifier field).
       </p>
 
       <div className="panel">
@@ -59,7 +60,7 @@ export function App() {
           <table>
             <thead>
               <tr>
-                <th>Date of Landfall</th>
+                <th>First date in Florida as HU (DD/MM/YYYY, UTC)</th>
                 <th>Hurricane Name</th>
                 <th>Max Wind in Knots</th>
               </tr>
@@ -67,7 +68,7 @@ export function App() {
             <tbody>
               {hurricanes.map((h, i) => (
                 <tr key={i}>
-                  <td>{h.dateOfLandfall.toISOString()}</td>
+                  <td>{h.firstHuInFloridaDateDisplay}</td>
                   <td>{h.name}</td>
                   <td>{h.maximumSustainedWindKt}</td>
                 </tr>
