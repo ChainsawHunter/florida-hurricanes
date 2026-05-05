@@ -70,6 +70,25 @@ td {
   white-space: nowrap;
 }
 
+.landfall-list {
+  margin: 0;
+  padding-left: 1.1rem;
+  white-space: normal;
+}
+
+.landfall-list li + li {
+  margin-top: 0.15rem;
+}
+
+.landfall-event {
+  margin: 0;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New",
+    monospace;
+  font-size: 0.75rem;
+  line-height: 1.25;
+  white-space: pre-wrap;
+}
+
 th {
   position: sticky;
   top: 0;

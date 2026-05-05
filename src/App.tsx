@@ -79,7 +79,24 @@ export function App() {
                   <td>{h.name}</td>
                   <td>{h.landfallRowEvents.length}</td>
                   <td>{h.maximumSustainedWindKt}</td>
-                  <td>{h.landfallRowEvents.map((event) => event.landfallDateTimeDisplay).join(", ")}</td>
+                  <td>
+                    <ul className="landfall-list">
+                      {h.landfallRowEvents.map((event, eventIndex) => (
+                        <li key={eventIndex}>
+                          <pre className="landfall-event">
+                            {JSON.stringify(
+                              {
+                                ...event,
+                                dateOfLandfall: event.dateOfLandfall.toISOString(),
+                              },
+                              null,
+                              2,
+                            )}
+                          </pre>
+                        </li>
+                      ))}
+                    </ul>
+                  </td>
                 </tr>
               ))}
             </tbody>

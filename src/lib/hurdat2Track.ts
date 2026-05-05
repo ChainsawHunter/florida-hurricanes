@@ -17,14 +17,6 @@ export type Hurdat2SystemStatus =
   | "LO"
   | "DB";
 
-/** 34, 50, or 64 kt wind radii maximum extent in nautical miles, by quadrant (NE → SE → SW → NW). */
-export type Hurdat2QuadrantRadiiNm = {
-  northeastern: number | null;
-  southeastern: number | null;
-  southwestern: number | null;
-  northwestern: number | null;
-};
-
 /**
  * One best-track observation row after storm header lines.
  */

@@ -7,7 +7,8 @@ import {
 } from "./hurdat2Storms";
 
 const FL_SAMPLE =
-`AL011851,            FL_STORM,     2,
+`AL011851,            FL_STORM,     3,
+18510625, 1800,  , HU, 27.0N,  80.0W,  80, -999, -999, -999, -999, -999, -999, -999, -999, -999, -999, -999, -999, -999, -999
 18510625, 2100,  , HU, 28.2N,  81.2W,  80, -999, -999, -999, -999, -999, -999, -999, -999, -999, -999, -999, -999, -999, -999
 18510626, 0000,  , HU, 29.0N,  82.0W,  90, -999, -999, -999, -999, -999, -999, -999, -999, -999, -999, -999, -999, -999, -999
 
@@ -77,6 +78,9 @@ describe("processFloridaHurricanesFromHurdat2Data", () => {
     expect(floridaHurricanes).toHaveLength(1);
     expect(floridaHurricanes[0].maximumSustainedWindKt).toBe(90);
     expect(floridaHurricanes[0].longitude).toBeLessThan(0);
-    // expect(floridaHurricanes[0].firstHuInFloridaDateTimeDisplay).toBe("25/06/1851 - 21:00");
+    expect(floridaHurricanes[0].landfallRowEvents).toHaveLength(1);
+    expect(floridaHurricanes[0].landfallRowEvents[0]?.landfallDateTimeDisplay).toBe(
+      "06/25/1851 - 21:00",
+    );
   });
 });

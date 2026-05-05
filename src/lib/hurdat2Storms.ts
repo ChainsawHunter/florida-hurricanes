@@ -141,21 +141,28 @@ export function processFloridaHurricanesFromHurdat2Data(text: string): FloridaHu
     const header = storm.headerParsed;
     if (!header?.idParts || header.idParts.basin !== "AL") return [];
 
-    const trackRows = storm.trackData
+    const trackRowsAll = storm.trackData
       .split("\n")
       .map((line) => parseHurdat2TrackLine(line))
-      .filter((r): r is Hurdat2TrackRow => r !== null)
-      .filter(isFloridaHurricaneTrackRow);
+      .filter((r): r is Hurdat2TrackRow => r !== null);
 
-    if (trackRows.length === 0) return [];
+    const huRowsInFlorida = trackRowsAll.filter(
+      (row) => row.systemStatus === "HU" && isInFloridaPolygon(row),
+    );
+    if (huRowsInFlorida.length === 0) return [];
 
-    const first = trackRows[0];
-    const maxWind = trackRows.reduce((max, row) => {
+    const landfallRows = findFloridaEntryRows(trackRowsAll).filter(
+      (row) => row.systemStatus === "HU",
+    );
+    if (landfallRows.length === 0) return [];
+
+    const first = landfallRows[0];
+    const maxWind = huRowsInFlorida.reduce((max, row) => {
       const v = row.maximumSustainedWindKt ?? 0;
       return v > max ? v : max;
     }, 0);
 
-    const landfallRowEvents = trackRows.map((row) => {
+    const landfallRowEvents = landfallRows.map((row) => {
       return {
         dateOfLandfall: new Date(row.year, row.month - 1, row.day, row.hourUtc, row.minuteUtc),
         landfallDateTimeDisplay: formatMmDdYyyy(row.day, row.month, row.year) + " - " + formatHhMm(row.hourUtc, row.minuteUtc),
@@ -204,7 +211,21 @@ function isInFloridaPolygon(trackRow: Hurdat2TrackRow): boolean {
   return isPointInFlorida(lat, lon);
 }
 
-/** In-Florida hurricane track row: intensity `HU` and center position inside the Florida polygon. */
-function isFloridaHurricaneTrackRow(trackRow: Hurdat2TrackRow): boolean {
-  return trackRow.systemStatus === "HU" && isInFloridaPolygon(trackRow);
+/**
+ * Finds outside→inside crossings into the Florida polygon.
+ *
+ * A crossing is recorded on the *inside* row: the first row whose center is inside Florida
+ * where the immediately-previous row’s center is outside Florida.
+ */
+function findFloridaEntryRows(trackRows: Hurdat2TrackRow[]): Hurdat2TrackRow[] {
+  const entryRows: Hurdat2TrackRow[] = [];
+  let prevInFlorida = false;
+
+  for (const row of trackRows) {
+    const inFlorida = isInFloridaPolygon(row);
+    if (!prevInFlorida && inFlorida) entryRows.push(row);
+    prevInFlorida = inFlorida;
+  }
+
+  return entryRows;
 }
