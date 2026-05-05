@@ -8,9 +8,9 @@ type PolygonFeature = Feature<Polygon | MultiPolygon, GeoJsonProperties>;
 
 /**
  * Coastline “forgiveness” buffer.
- * Consider landfall within 25km of the coastline.
+ * Consider landfall within 15km of the coastline.
  */
-const FLORIDA_BUFFER_KM = 25;
+const FLORIDA_BUFFER_KM = 15;
 
 const FLORIDA_BUFFERED_GEOMETRY = (() => {
   const data = floridaGeoJson as unknown as PolygonFeature;

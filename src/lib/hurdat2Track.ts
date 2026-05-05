@@ -1,6 +1,6 @@
 /**
  * HURDAT2 best-track (time-series) row semantics.
- * Files use comma-separated values; fixed “spaces” in the NHC spec correspond to these fields.
+ * Files use comma-separated values; fixed “spaces” in the spec correspond to these fields.
  */
 
 /** Record identifier (space 17 / field before status); blank field normalized to `""`. */

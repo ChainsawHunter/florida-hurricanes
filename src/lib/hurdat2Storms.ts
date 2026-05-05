@@ -1,7 +1,11 @@
 import { Hurdat2TrackRow, parseHurdat2TrackLine } from "./hurdat2Track";
 import { isPointInFlorida } from "./isPointInFlorida";
 
-/** The main hurricane record type we want to eventually display in the app. */
+// -----------------------------
+// Public types
+// -----------------------------
+
+/** The main hurricane record type we want to display in the app. */
 export type FloridaHurricane = {
   name: string;
   latitude: number;
@@ -17,9 +21,14 @@ export type LandfallRowEvent = {
   longitude: number;
 };
 
+// -----------------------------
+// HURDAT2 storm header parsing
+// -----------------------------
+
 /** Two-letter basin + six digits, e.g. AL011851 */
 const STORM_HEADER_FIRST_FIELD = /^[A-Z]{2}\d{6}$/i;
 
+/** Checks if a line is a valid HURDAT2 storm header line. */
 export function isHurdat2StormHeaderLine(line: string): boolean {
   const trimmed = line.trim();
   if (!trimmed) return false;
@@ -81,6 +90,10 @@ export function parseHurdat2StormHeaderLine(line: string): Hurdat2StormHeaderPar
   };
 }
 
+// -----------------------------
+// Chunking: full file → per-storm blocks
+// -----------------------------
+
 export type Hurdat2StormChunk = {
   /** Raw storm metadata line (id, name, entry count). */
   headerLine: string;
@@ -97,8 +110,8 @@ export type Hurdat2StormChunk = {
 };
 
 /**
- * Splits full HURDAT2 text into per-storm chunks (header line + following best-track rows).
- * Used internally by {@link processFloridaHurricanesFromHurdat2Data};
+ * Groups HURDAT2 data into per-storm chunks (header line + following best-track rows).
+ * Used internally by {@link processFloridaHurricanesFromHurdat2Data}.
  */
 function groupHurdat2IntoStormChunks(text: string): Hurdat2StormChunk[] {
   const lines = text.split(/\r?\n/);
@@ -128,12 +141,21 @@ function groupHurdat2IntoStormChunks(text: string): Hurdat2StormChunk[] {
     } else if (headerLine !== null) {
       stormLines.push(line.trimEnd());
     }
-  } 
+  }
   flush();
 
   return stormChunks;
 }
 
+// -----------------------------
+// Public API: storms → Florida hurricanes
+// -----------------------------
+
+/**
+ * Processes HURDAT2 data to extract Florida hurricanes.
+ * @param text - The HURDAT2 text data to process.
+ * @returns An array of Florida hurricane records.
+ */
 export function processFloridaHurricanesFromHurdat2Data(text: string): FloridaHurricane[] {
   const storms = groupHurdat2IntoStormChunks(text);
 
@@ -165,10 +187,10 @@ export function processFloridaHurricanesFromHurdat2Data(text: string): FloridaHu
     const landfallRowEvents = landfallRows.map((row) => {
       return {
         dateOfLandfall: new Date(row.year, row.month - 1, row.day, row.hourUtc, row.minuteUtc),
-        landfallDateTimeDisplay: formatMmDdYyyy(row.day, row.month, row.year) + " - " + formatHhMm(row.hourUtc, row.minuteUtc),
+        landfallDateTimeDisplay:
+          formatMmDdYyyy(row.day, row.month, row.year) + " - " + formatHhMm(row.hourUtc, row.minuteUtc),
         latitude: toSignedLatitude(row.latitudeDegrees, row.latitudeHemisphere),
         longitude: toSignedLongitude(row.longitudeDegrees, row.longitudeHemisphere),
-        
       };
     });
 
@@ -183,6 +205,10 @@ export function processFloridaHurricanesFromHurdat2Data(text: string): FloridaHu
     ];
   });
 }
+
+// -----------------------------
+// Local helpers: formatting / geography / crossing detection
+// -----------------------------
 
 function pad2(n: number): string {
   return String(n).padStart(2, "0");
