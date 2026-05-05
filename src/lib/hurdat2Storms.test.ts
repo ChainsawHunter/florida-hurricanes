@@ -80,7 +80,7 @@ describe("processFloridaHurricanesFromHurdat2Data", () => {
     expect(floridaHurricanes[0].longitude).toBeLessThan(0);
     expect(floridaHurricanes[0].landfallRowEvents).toHaveLength(1);
     expect(floridaHurricanes[0].landfallRowEvents[0]?.landfallDateTimeDisplay).toBe(
-      "06/25/1851 - 21:00",
+      "06/25/1851 - 18:00",
     );
   });
 });

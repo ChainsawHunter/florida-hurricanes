@@ -82,18 +82,7 @@ export function App() {
                   <td>
                     <ul className="landfall-list">
                       {h.landfallRowEvents.map((event, eventIndex) => (
-                        <li key={eventIndex}>
-                          <pre className="landfall-event">
-                            {JSON.stringify(
-                              {
-                                ...event,
-                                dateOfLandfall: event.dateOfLandfall.toISOString(),
-                              },
-                              null,
-                              2,
-                            )}
-                          </pre>
-                        </li>
+                        <li key={eventIndex}>{event.landfallDateTimeDisplay}</li>
                       ))}
                     </ul>
                   </td>
