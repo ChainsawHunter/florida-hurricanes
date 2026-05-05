@@ -13,7 +13,7 @@ type PolygonFeature = Feature<Polygon | MultiPolygon, GeoJsonProperties>;
 const FLORIDA_BUFFER_KM = 15;
 
 const FLORIDA_BUFFERED_GEOMETRY = (() => {
-  const data = floridaGeoJson as unknown as PolygonFeature;
+  const data = floridaGeoJson as PolygonFeature;
   const buffered = buffer(data, FLORIDA_BUFFER_KM, { units: "kilometers" });
   if (!buffered?.geometry) return data.geometry;
   return buffered.geometry;
