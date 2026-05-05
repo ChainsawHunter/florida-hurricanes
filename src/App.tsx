@@ -60,7 +60,7 @@ export function App() {
           <table>
             <thead>
               <tr>
-                <th>First date in Florida as HU (DD/MM/YYYY, UTC)</th>
+                <th>First date in Florida as HU (MM/DD/YYYY - HH:MM UTC)</th>
                 <th>Hurricane Name</th>
                 <th>Max Wind in Knots</th>
               </tr>
@@ -68,7 +68,7 @@ export function App() {
             <tbody>
               {hurricanes.map((h, i) => (
                 <tr key={i}>
-                  <td>{h.firstHuInFloridaDateDisplay}</td>
+                  <td>{h.firstHuInFloridaDateTimeDisplay}</td>
                   <td>{h.name}</td>
                   <td>{h.maximumSustainedWindKt}</td>
                 </tr>

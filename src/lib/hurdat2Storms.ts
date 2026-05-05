@@ -6,8 +6,8 @@ export type FloridaHurricane = {
   name: string;
   /** UTC instant of the **first** track row with status `HU` whose center lies in Florida. */
   firstHuInFloridaDate: Date;
-  /** `DD/MM/YYYY` from that row’s HURDAT2 calendar date fields (not locale-formatted). */
-  firstHuInFloridaDateDisplay: string;
+  /** `DD/MM/YYYY - HH:MM UTC` from that row’s HURDAT2 calendar date fields (not locale-formatted). */
+  firstHuInFloridaDateTimeDisplay: string;
   latitude: number;
   longitude: number;
   maximumSustainedWindKt: number;
@@ -162,7 +162,7 @@ export function processFloridaHurricanesFromHurdat2Data(text: string): FloridaHu
           first.hourUtc,
           first.minuteUtc,
         ),
-        firstHuInFloridaDateDisplay: formatMmDdYyyy(first.day, first.month, first.year),
+        firstHuInFloridaDateTimeDisplay: formatMmDdYyyy(first.day, first.month, first.year) + " - " + formatHhMm(first.hourUtc, first.minuteUtc),
         latitude: toSignedLatitude(first.latitudeDegrees, first.latitudeHemisphere),
         longitude: toSignedLongitude(first.longitudeDegrees, first.longitudeHemisphere),
         maximumSustainedWindKt: maxWind,
@@ -178,6 +178,10 @@ function pad2(n: number): string {
 /** `MM/DD/YYYY` using the HURDAT2 row’s calendar fields (month/day/year). */
 function formatMmDdYyyy(day: number, month: number, year: number): string {
   return `${pad2(month)}/${pad2(day)}/${String(year)}`;
+}
+
+function formatHhMm(hour: number, minute: number): string {
+  return `${pad2(hour)}:${pad2(minute)}`;
 }
 
 function toSignedLatitude(degrees: number, hemisphere: "N" | "S"): number {
