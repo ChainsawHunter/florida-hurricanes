@@ -56,7 +56,7 @@ export function App() {
 
       {hurricanes.length > 0 && (
         <p className="meta">
-          {landfallRowEventCount} landfall row event
+          {landfallRowEventCount} hurricane landfall event
           {landfallRowEventCount === 1 ? "" : "s"} ({hurricanes.length} storm
           {hurricanes.length === 1 ? "" : "s"})
         </p>
@@ -68,7 +68,6 @@ export function App() {
             <thead>
               <tr>
                 <th>Hurricane Name</th>
-                <th>Landfall rows</th>
                 <th>Max Wind in Knots</th>
                 <th>Landfall Event Dates and Times</th>
               </tr>
@@ -77,7 +76,6 @@ export function App() {
               {hurricanes.map((h, i) => (
                 <tr key={i}>
                   <td>{h.name}</td>
-                  <td>{h.landfallRowEvents.length}</td>
                   <td>{h.maximumSustainedWindKt}</td>
                   <td>
                     <ul className="landfall-list">

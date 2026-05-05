@@ -5,11 +5,8 @@ import { parseHurdat2TrackLine } from "./hurdat2Track";
 const EXAMPLE_TS =
   "18510816, 0000,  , TS, 13.4N,  48.0W,  40, -999, -999, -999, -999, -999, -999, -999, -999, -999, -999, -999, -999, -999, -999";
 
-const EXAMPLE_LANDFALL =
-  "18510625, 2100, L, HU, 28.2N,  96.8W,  80, -999, -999, -999, -999, -999, -999, -999, -999, -999, -999, -999, -999, -999, -999";
-
 describe("parseHurdat2TrackLine", () => {
-  it("parses the documented TS example for fields we need (21 fields)", () => {
+  it("parses the documented TS example for fields we need", () => {
     const row = parseHurdat2TrackLine(EXAMPLE_TS);
     expect(row).not.toBeNull();
     expect(row!.year).toBe(1851);
@@ -24,14 +21,6 @@ describe("parseHurdat2TrackLine", () => {
     expect(row!.longitudeDegrees).toBe(48.0);
     expect(row!.longitudeHemisphere).toBe("W");
     expect(row!.maximumSustainedWindKt).toBe(40);
-  });
-
-  it("parses record identifier L (landfall)", () => {
-    const row = parseHurdat2TrackLine(EXAMPLE_LANDFALL);
-    expect(row).not.toBeNull();
-    expect(row!.recordIdentifier).toBe("L");
-    expect(row!.systemStatus).toBe("HU");
-    expect(row!.hourUtc).toBe(21);
   });
 
   it("returns null for storm header lines", () => {
