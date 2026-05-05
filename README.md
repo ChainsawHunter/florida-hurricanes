@@ -2,6 +2,15 @@
 
 Small Vite + React app that parses **HURDAT2** best-track data and identifies **Florida entry (“landfall”) events** using a Florida polygon.
 
+## How “landfall” events are determined
+
+For each Atlantic (`AL`) storm in the HURDAT2 file, the app:
+
+1. Parses each best-track row into latitude/longitude and system status.
+2. Checks whether the storm center is **inside** the Florida polygon.
+3. Records a “landfall/entry” event on the *first* inside-Florida row where the immediately previous row was **outside** Florida.
+4. Only keeps entry events whose inside row has `systemStatus === "HU"` (hurricane intensity).
+
 ## Prerequisites
 
 - Node.js (>= 18)
@@ -12,7 +21,7 @@ Small Vite + React app that parses **HURDAT2** best-track data and identifies **
 ```bash
 npm install
 npm run dev
-```
+```     
 
 ## Data options (recommended)
 
