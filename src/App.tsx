@@ -10,6 +10,11 @@ export function App() {
   const [fileName, setFileName] = useState<string | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
 
+  const landfallRowEventCount = hurricanes.reduce(
+    (sum, h) => sum + h.landfallRowEvents.length,
+    0,
+  );
+
   const onFile = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     e.target.value = "";
@@ -51,7 +56,9 @@ export function App() {
 
       {hurricanes.length > 0 && (
         <p className="meta">
-          {hurricanes.length} Florida hurricane{hurricanes.length === 1 ? "" : "s"} found
+          {landfallRowEventCount} landfall row event
+          {landfallRowEventCount === 1 ? "" : "s"} ({hurricanes.length} storm
+          {hurricanes.length === 1 ? "" : "s"})
         </p>
       )}
 
@@ -60,17 +67,19 @@ export function App() {
           <table>
             <thead>
               <tr>
-                <th>First date in Florida as HU (MM/DD/YYYY - HH:MM UTC)</th>
                 <th>Hurricane Name</th>
+                <th>Landfall rows</th>
                 <th>Max Wind in Knots</th>
+                <th>Landfall Event Dates and Times</th>
               </tr>
             </thead>
             <tbody>
               {hurricanes.map((h, i) => (
                 <tr key={i}>
-                  <td>{h.firstHuInFloridaDateTimeDisplay}</td>
                   <td>{h.name}</td>
+                  <td>{h.landfallRowEvents.length}</td>
                   <td>{h.maximumSustainedWindKt}</td>
+                  <td>{h.landfallRowEvents.map((event) => event.landfallDateTimeDisplay).join(", ")}</td>
                 </tr>
               ))}
             </tbody>

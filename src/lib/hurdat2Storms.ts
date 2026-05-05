@@ -4,13 +4,17 @@ import { isPointInFlorida } from "./isPointInFlorida";
 /** The main hurricane record type we want to eventually display in the app. */
 export type FloridaHurricane = {
   name: string;
-  /** UTC instant of the **first** track row with status `HU` whose center lies in Florida. */
-  firstHuInFloridaDate: Date;
-  /** `DD/MM/YYYY - HH:MM UTC` from that row’s HURDAT2 calendar date fields (not locale-formatted). */
-  firstHuInFloridaDateTimeDisplay: string;
   latitude: number;
   longitude: number;
   maximumSustainedWindKt: number;
+  landfallRowEvents: LandfallRowEvent[];
+};
+
+export type LandfallRowEvent = {
+  dateOfLandfall: Date;
+  landfallDateTimeDisplay: string;
+  latitude: number;
+  longitude: number;
 };
 
 /** Two-letter basin + six digits, e.g. AL011851 */
@@ -151,21 +155,23 @@ export function processFloridaHurricanesFromHurdat2Data(text: string): FloridaHu
       return v > max ? v : max;
     }, 0);
 
+    const landfallRowEvents = trackRows.map((row) => {
+      return {
+        dateOfLandfall: new Date(row.year, row.month - 1, row.day, row.hourUtc, row.minuteUtc),
+        landfallDateTimeDisplay: formatMmDdYyyy(row.day, row.month, row.year) + " - " + formatHhMm(row.hourUtc, row.minuteUtc),
+        latitude: toSignedLatitude(row.latitudeDegrees, row.latitudeHemisphere),
+        longitude: toSignedLongitude(row.longitudeDegrees, row.longitudeHemisphere),
+        
+      };
+    });
+
     return [
       {
         name: header.name,
-        // JS Date month is 0-based; HURDAT2 month is 1-based.
-        firstHuInFloridaDate: new Date(
-          first.year,
-          first.month - 1,
-          first.day,
-          first.hourUtc,
-          first.minuteUtc,
-        ),
-        firstHuInFloridaDateTimeDisplay: formatMmDdYyyy(first.day, first.month, first.year) + " - " + formatHhMm(first.hourUtc, first.minuteUtc),
         latitude: toSignedLatitude(first.latitudeDegrees, first.latitudeHemisphere),
         longitude: toSignedLongitude(first.longitudeDegrees, first.longitudeHemisphere),
         maximumSustainedWindKt: maxWind,
+        landfallRowEvents,
       },
     ];
   });
