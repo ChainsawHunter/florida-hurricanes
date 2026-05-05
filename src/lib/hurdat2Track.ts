@@ -97,6 +97,8 @@ function parseStatus(raw: string): Hurdat2SystemStatus | null {
 /**
  * Parses one comma-separated HURDAT2 best-track line into {@link Hurdat2TrackRow}.
  * Expects at least 20 fields but only uses the first 7.
+ * @param line - The HURDAT2 best-track line to parse.
+ * @returns The parsed {@link Hurdat2TrackRow} or null if the line is invalid.
  */
 export function parseHurdat2TrackLine(line: string): Hurdat2TrackRow | null {
   const fields = line.split(",").map((s) => s.trim());

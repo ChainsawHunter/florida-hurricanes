@@ -83,4 +83,28 @@ describe("processFloridaHurricanesFromHurdat2Data", () => {
       "06/25/1851 - 18:00",
     );
   });
+  it("processes multiple Florida hurricanes from HURDAT2 data", () => {
+    const floridaHurricanes = processFloridaHurricanesFromHurdat2Data(FL_SAMPLE);
+    expect(floridaHurricanes).toHaveLength(2);
+    expect(floridaHurricanes[0].maximumSustainedWindKt).toBe(90);
+    expect(floridaHurricanes[0].longitude).toBeLessThan(0);
+    expect(floridaHurricanes[0].landfallRowEvents).toHaveLength(1);
+    expect(floridaHurricanes[0].landfallRowEvents[0]?.landfallDateTimeDisplay).toBe(
+      "06/25/1851 - 18:00",
+    );
+  });
+  it("processes Florida hurricanes from HURDAT2 data with multiple landfall rows", () => {
+    const floridaHurricanes = processFloridaHurricanesFromHurdat2Data(FL_SAMPLE);
+    expect(floridaHurricanes).toHaveLength(1);
+    expect(floridaHurricanes[0].maximumSustainedWindKt).toBe(90);
+    expect(floridaHurricanes[0].longitude).toBeLessThan(0);
+    expect(floridaHurricanes[0].landfallRowEvents).toHaveLength(1);
+    expect(floridaHurricanes[0].landfallRowEvents[0]?.landfallDateTimeDisplay).toBe(
+      "06/25/1851 - 18:00",
+    );
+  });
+  it("processes Florida hurricanes from HURDAT2 data with no landfall rows", () => {
+    const floridaHurricanes = processFloridaHurricanesFromHurdat2Data(FL_SAMPLE);
+    expect(floridaHurricanes).toHaveLength(0);
+  });
 });

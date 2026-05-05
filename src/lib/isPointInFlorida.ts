@@ -21,11 +21,10 @@ const FLORIDA_BUFFERED_GEOMETRY = (() => {
 
 /**
  * Returns true when the (lat, lon) point lies inside the Florida polygon.
- *
- * Inputs must be **signed degrees**:
- * - latitude: North positive, South negative
- * - longitude: East positive, West negative
- */
+ * @param latitude - The latitude of the point to check.
+ * @param longitude - The longitude of the point to check.
+ * @returns True if the point is inside the Florida polygon, false otherwise.
+*/
 export function isPointInFlorida(latitude: number, longitude: number): boolean {
   return booleanPointInPolygon(point([longitude, latitude]), FLORIDA_BUFFERED_GEOMETRY);
 }
