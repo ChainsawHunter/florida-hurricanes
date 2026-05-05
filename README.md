@@ -18,6 +18,8 @@ For each Atlantic (`AL`) storm in the HURDAT2 file, the app:
 
 ## Quick start
 
+First, install all required packages. Then run the simple web app:
+
 ```bash
 npm install
 npm run dev
@@ -49,3 +51,19 @@ If you already have a HURDAT2 `.txt` file, just upload it in the UI.
 ## Attribution
 
 - Florida GeoJSON sourced from `https://github.com/glynnbird/usstatesgeojson`
+
+## Technology choices
+
+- **React + TypeScript**: simple, type-safe UI for loading files and rendering tabular results.
+- **Vite**: fast dev server and build tooling with minimal config overhead.
+- **Turf.js** (`@turf/boolean-point-in-polygon`, `@turf/buffer`): robust geographic operations for point-in-polygon tests and coastline buffering.
+- **Vitest**: lightweight test runner for the parsing and landfall-detection logic.
+- **Node.js scripts**: small utilities for downloading HURDAT2 data and running tests/builds.
+
+## Possible future improvements
+
+- **Refine landfall definition**: experiment with more nuanced entry logic (e.g., handling multiple coast crossings, using midpoint timestamps between fixes, or incorporating HURDAT2 record identifiers like `L` where available).
+- **Add a map visualization**: render storm tracks and Florida polygon on an interactive map (e.g., Leaflet or Mapbox GL) and visually highlight landfall segments.
+- **Support other regions/states**: parameterize the polygon and allow switching to other U.S. states or basins (e.g., Gulf Coast, specific counties, or custom-uploaded GeoJSON).
+- **Richer storm metadata**: surface additional HURDAT2 fields (pressure, wind radii, status changes) alongside landfall events.
+- **Performance and UX polish**: stream results for large files, add basic filters (year range, intensity), and provide download/export of the derived landfall events.
