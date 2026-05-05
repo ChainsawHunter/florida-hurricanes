@@ -8,7 +8,8 @@
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview",
     "test": "vitest",
-    "test:run": "vitest run"
+    "test:run": "vitest run",
+    "download:hurdat2": "node scripts/downloadHurdat2.mjs"
   },
   "dependencies": {
     "@turf/boolean-point-in-polygon": "^7.3.5",
