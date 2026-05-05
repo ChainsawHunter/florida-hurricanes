@@ -35,9 +35,11 @@ export function App() {
     <div className="app">
       <h1>Florida hurricanes</h1>
       <p className="lead">
-        Choose a HURDAT2-format text file. The app lists Atlantic storms that had at least one best-track
-        point with status <code>HU</code> whose center lies inside the Florida polygon (no reliance on the
-        HURDAT2 record-identifier field).
+        Upload a HURDAT2-format text file to see a list of Atlantic storms that had at least one best-track
+        point with status <code>HU</code> whose center lies within 15km of the coastline of Florida.
+        <br />
+        Produces a list of hurricanes that made landfall in Florida, along with the date and time of each landfall event.
+        Note that certain storms may have multiple landfall events, particularly if they make multiple passes through Florida.
       </p>
 
       <div className="panel">

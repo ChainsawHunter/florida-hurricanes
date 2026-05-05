@@ -48,6 +48,14 @@ Then upload `.data/hurdat2.txt` in the UI.
 
 If you already have a HURDAT2 `.txt` file, just upload it in the UI.
 
+## Key files to review
+
+- `src/lib/hurdat2Track.ts`: parses HURDAT2 best-track rows into typed objects.
+- `src/lib/hurdat2Storms.ts`: groups rows into storms and applies the Florida landfall logic.
+- `src/lib/isPointInFlorida.ts`: point-in-polygon test with a buffered Florida coastline.
+- `src/App.tsx`: simple React UI for uploading a file and displaying detected hurricanes/landfalls.
+- `src/lib/hurdat2Track.test.ts` and `src/lib/hurdat2Storms.test.ts`: unit tests that cover parsing and landfall detection behavior.
+
 ## Attribution
 
 - Florida GeoJSON sourced from `https://github.com/glynnbird/usstatesgeojson`
