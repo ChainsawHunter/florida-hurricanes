@@ -80,15 +80,6 @@ td {
   margin-top: 0.15rem;
 }
 
-.landfall-event {
-  margin: 0;
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New",
-    monospace;
-  font-size: 0.75rem;
-  line-height: 1.25;
-  white-space: pre-wrap;
-}
-
 th {
   position: sticky;
   top: 0;
@@ -106,37 +97,4 @@ tr:hover td {
   font-size: 0.875rem;
   margin: 0;
   padding: 1rem;
-}
-
-.storm-list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
-  background: #fff;
-  max-height: min(60vh, 480px);
-  overflow: auto;
-}
-
-.storm-list__item {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.35rem 0.75rem;
-  padding: 0.5rem 0.75rem;
-  border-bottom: 1px solid #e2e8f0;
-  font-size: 0.8125rem;
-}
-
-.storm-list__item:last-child {
-  border-bottom: none;
-}
-
-.storm-list__id {
-  font-weight: 600;
-  color: #0f172a;
-}
-
-.storm-list__meta {
-  color: #64748b;
 }
