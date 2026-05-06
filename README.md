@@ -70,7 +70,7 @@ If you already have a HURDAT2 `.txt` file, just upload it in the UI.
 
 ## Possible future improvements
 
-- **Refine landfall definition**: experiment with more nuanced entry logic (e.g., handling multiple coast crossings, using midpoint timestamps between fixes, or incorporating HURDAT2 record identifiers like `L` where available).
+- **Refine landfall definition**: current entry logic could be potentially tightened to account for fast-moving storms (missed between timesteps), very tight double landfalls (≤6 hours apart), or early-era storms (less precise tracks)
 - **Add a map visualization**: render storm tracks and Florida polygon on an interactive map (e.g., Leaflet or Mapbox GL) and visually highlight landfall segments.
 - **Support other regions/states**: parameterize the polygon and allow switching to other U.S. states or basins (e.g., Gulf Coast, specific counties, or custom-uploaded GeoJSON).
 - **Richer storm metadata**: surface additional HURDAT2 fields (pressure, wind radii, status changes) alongside landfall events.

@@ -38,6 +38,7 @@ export function App() {
         Upload a HURDAT2-format text file to see a list of Atlantic storms that had at least one best-track
         point with status <code>HU</code> whose center lies within 15km of the coastline of Florida.
         <br />
+        <br />
         Produces a list of hurricanes that made landfall in Florida, along with the date and time of each landfall event.
         Note that certain storms may have multiple landfall events, particularly if they make multiple passes through Florida.
       </p>
